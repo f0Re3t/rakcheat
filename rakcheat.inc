@@ -117,7 +117,7 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 				}
 			}
 		}
-		else if(MAX_VEHICLES <= onFootData[PR_surfingVehicleId] < MAX_OBJECTS)
+		else if(MAX_VEHICLES <= onFootData[PR_surfingVehicleId] < MAX_OBJECTS + MAX_VEHICLES)
 		{
 		    new ac_object = IsValidObject(onFootData[PR_surfingVehicleId]);
 		    if(ac_object == 0)
