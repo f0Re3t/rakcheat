@@ -117,6 +117,45 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 				}
 			}
 		}
+		else if(MAX_VEHICLES <= onFootData[PR_surfingVehicleId] < MAX_OBJECTS)
+		{
+		    new ac_object = IsValidObject(onFootData[PR_surfingVehicleId]);
+		    if(ac_object == 0)
+			{
+			    #if defined DEBUG
+				    printf("[Rakcheat debug] [ID_PLAYER_SYNC] IsValidObject: %d, objectid: %d",
+				    ac_object, onFootData[PR_surfingVehicleId]);
+		        #endif
+		        Kick(playerid);
+		        return 0;
+			}
+			else
+			{
+			    if(floatabs(onFootData[PR_surfingOffsets][0]) >= 101.0 || floatabs(onFootData[PR_surfingOffsets][1]) >= 101.0 ||
+			    floatabs(onFootData[PR_surfingOffsets][2]) >= 101.0)
+				{
+				    #if defined DEBUG
+					    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Object modelid: %d, objectid: %d, surfing offsets x, y, z: %f, %f, %f",
+					    GetObjectModel(onFootData[PR_surfingVehicleId]), onFootData[PR_surfingVehicleId], onFootData[PR_surfingOffsets][0],
+					    onFootData[PR_surfingOffsets][1], onFootData[PR_surfingOffsets][2]);
+			        #endif
+			        Kick(playerid);
+			        return 0;
+				}
+			}
+		}
+		else
+		{
+		    if(onFootData[PR_surfingVehicleId] != INVALID_VEHICLE_ID)
+			{
+			    #if defined DEBUG
+				    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Surfing: %d",
+				    onFootData[PR_surfingVehicleId]);
+		        #endif
+		        Kick(playerid);
+		        return 0;
+			}
+		}
 	}
 
 	if(onFootData[PR_animationFlags] == 0)
