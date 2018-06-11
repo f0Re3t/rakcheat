@@ -360,7 +360,7 @@ IPacket:ID_BULLET_SYNC(playerid, BitStream:bs)
 	{
 	    #if defined DEBUG
 		    printf("[Rakcheat debug] [ID_BULLET_SYNC] Origin x, y, z: %f, %f, %f",
-		    bulletData[PR_position][0], bulletData[PR_position][1], bulletData[PR_position][2]);
+		    bulletData[PR_origin][0], bulletData[PR_origin][1], bulletData[PR_origin][2]);
         #endif
 		Kick(playerid);
 		return 0;
