@@ -13,6 +13,24 @@
     #define DEBUG
 #endif
 
+#define INVALID_POSITION 1
+#define INVALID_QUATERNION 2
+#define INVALID_VELOCITY 3
+#define INVALID_SURFING_OFFSETS 4
+#define INVALID_SURFING 5
+#define INVALID_ANIMATION_FLAGS 6
+#define INVALID_HEALTH 7
+#define INVALID_TRAIN_SPEED 8
+#define INVALID_ROLL 9
+#define INVALID_DIRECTION 10
+#define INVALID_ANGULAR_VELOCITY 11
+#define INVALID_ORIGIN 12
+#define INVALID_HITPOS 13
+#define INVALID_OFFSETS 14
+#define INVALID_CAMFRONTVEC 15
+#define INVALID_CAMPOS 16
+#define INVALID_AIMZ 17
+
 static const ID_PLAYER_SYNC = 207;
 static const ID_VEHICLE_SYNC = 200;
 static const ID_PASSENGER_SYNC = 211;
@@ -21,6 +39,10 @@ static const ID_TRAILER_SYNC = 210;
 static const ID_SPECTATOR_SYNC = 212;
 static const ID_BULLET_SYNC = 206;
 static const ID_AIM_SYNC = 203;
+
+#if defined OnRakcheatFilteredData
+    forward OnRakcheatFilteredData(playerid, sync, type, subtype);
+#endif
 
 static CheckValidityData(Float:data)
 {
@@ -37,6 +59,24 @@ static CheckValidityData(Float:data)
 	return 1;
 }
 
+static KickWithCode(playerid, sync, type, subtype)
+{
+    if(IsPlayerConnected(playerid) == 0)
+	{
+		return 0;
+	}
+	#if defined DEBUG
+	    printf("[Rakcheat] Suspicion on the ID %d. Reason code: %03d (%d)", playerid, type, subtype);
+    #endif
+    #if defined OnRakcheatFilteredData
+        return OnRakcheatFilteredData(playerid, sync, type, subtype);
+    #else
+        #pragma unused sync
+        Kick(playerid);
+        return 0;
+    #endif
+}
+
 IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 {
     new onFootData[PR_OnFootSync];
@@ -51,8 +91,7 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Position x, y, z: %f, %f, %f",
 		    onFootData[PR_position][0], onFootData[PR_position][1], onFootData[PR_position][2]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_POSITION, 0);
 	}
 
     if(CheckValidityData(onFootData[PR_quaternion][0]) != 1 || CheckValidityData(onFootData[PR_quaternion][1]) != 1 ||
@@ -62,8 +101,7 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Quaternion w, x, y, z: %f, %f, %f, %f",
 		    onFootData[PR_quaternion][0], onFootData[PR_quaternion][1], onFootData[PR_quaternion][2], onFootData[PR_quaternion][3]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_QUATERNION, 0);
 	}
 
 	if(CheckValidityData(onFootData[PR_velocity][0]) != 1 || CheckValidityData(onFootData[PR_velocity][1]) != 1 ||
@@ -73,8 +111,7 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Velocity x, y, z: %f, %f, %f",
 		    onFootData[PR_velocity][0], onFootData[PR_velocity][1], onFootData[PR_velocity][2]);
         #endif
-        Kick(playerid);
-        return 0;
+        return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_VELOCITY, 0);
 	}
 
 	if(CheckValidityData(onFootData[PR_surfingOffsets][0]) != 1 ||
@@ -85,8 +122,7 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Surfing offsets x, y, z: %f, %f, %f",
 		    onFootData[PR_surfingOffsets][0], onFootData[PR_surfingOffsets][1], onFootData[PR_surfingOffsets][2]);
         #endif
-        Kick(playerid);
-        return 0;
+        return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_SURFING_OFFSETS, 0);
 	}
 
 	if(onFootData[PR_surfingVehicleId] != 0)
@@ -100,8 +136,7 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 				    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Veh model: %d, vehicleid: %d",
 				    ac_model, onFootData[PR_surfingVehicleId]);
 		        #endif
-		        Kick(playerid);
-		        return 0;
+		        return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_SURFING, 0);
 			}
 			else
 			{
@@ -112,8 +147,7 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 					    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Veh model: %d, vehicleid: %d, surfing offsets x, y, z: %f, %f, %f",
 					    ac_model, onFootData[PR_surfingVehicleId], onFootData[PR_surfingOffsets][0], onFootData[PR_surfingOffsets][1], onFootData[PR_surfingOffsets][2]);
 			        #endif
-			        Kick(playerid);
-			        return 0;
+			        return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_SURFING_OFFSETS, 1);
 				}
 			}
 		}
@@ -126,8 +160,7 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 				    printf("[Rakcheat debug] [ID_PLAYER_SYNC] IsValidObject: %d, objectid: %d",
 				    ac_object, onFootData[PR_surfingVehicleId]);
 		        #endif
-		        Kick(playerid);
-		        return 0;
+		        return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_SURFING, 1);
 			}
 			else
 			{
@@ -139,8 +172,7 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 					    GetObjectModel(onFootData[PR_surfingVehicleId]), onFootData[PR_surfingVehicleId], onFootData[PR_surfingOffsets][0],
 					    onFootData[PR_surfingOffsets][1], onFootData[PR_surfingOffsets][2]);
 			        #endif
-			        Kick(playerid);
-			        return 0;
+			        return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_SURFING_OFFSETS, 2);
 				}
 			}
 		}
@@ -152,8 +184,7 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 				    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Surfing: %d",
 				    onFootData[PR_surfingVehicleId]);
 		        #endif
-		        Kick(playerid);
-		        return 0;
+		        return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_SURFING, 2);
 			}
 		}
 	}
@@ -164,8 +195,7 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Animation flags: %d",
 		    onFootData[PR_animationFlags]);
         #endif
-        Kick(playerid);
-        return 0;
+        return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_ANIMATION_FLAGS, 0);
 	}
 	return 1;
 }
@@ -184,8 +214,7 @@ IPacket:ID_VEHICLE_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_VEHICLE_SYNC] Quaternion w, x, y, z: %f, %f, %f, %f",
 		    inCarData[PR_quaternion][0], inCarData[PR_quaternion][1], inCarData[PR_quaternion][2], inCarData[PR_quaternion][3]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_VEHICLE_SYNC, INVALID_QUATERNION, 0);
 	}
 
 	if(CheckValidityData(inCarData[PR_position][0]) != 1 || CheckValidityData(inCarData[PR_position][1]) != 1 ||
@@ -195,8 +224,7 @@ IPacket:ID_VEHICLE_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_VEHICLE_SYNC] Position x, y, z: %f, %f, %f",
 		    inCarData[PR_position][0], inCarData[PR_position][1], inCarData[PR_position][2]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_VEHICLE_SYNC, INVALID_POSITION, 0);
 	}
 
 	if(CheckValidityData(inCarData[PR_velocity][0]) != 1 || CheckValidityData(inCarData[PR_velocity][1]) != 1 ||
@@ -206,8 +234,7 @@ IPacket:ID_VEHICLE_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_VEHICLE_SYNC] Velocity x, y, z: %f, %f, %f",
 		    inCarData[PR_velocity][0], inCarData[PR_velocity][1], inCarData[PR_velocity][2]);
         #endif
-        Kick(playerid);
-        return 0;
+        return KickWithCode(playerid, ID_VEHICLE_SYNC, INVALID_VELOCITY, 0);
 	}
 
 	if(CheckValidityData(inCarData[PR_vehicleHealth]) != 1)
@@ -216,8 +243,7 @@ IPacket:ID_VEHICLE_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_VEHICLE_SYNC] Veh health: %f",
 		    inCarData[PR_vehicleHealth]);
         #endif
-        Kick(playerid);
-        return 0;
+        return KickWithCode(playerid, ID_VEHICLE_SYNC, INVALID_HEALTH, 0);
 	}
 
 	if(CheckValidityData(inCarData[PR_trainSpeed]) != 1)
@@ -226,8 +252,7 @@ IPacket:ID_VEHICLE_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_VEHICLE_SYNC] Train speed: %f",
 		    inCarData[PR_trainSpeed]);
         #endif
-        Kick(playerid);
-        return 0;
+        return KickWithCode(playerid, ID_VEHICLE_SYNC, INVALID_TRAIN_SPEED, 0);
 	}
 	return 1;
 }
@@ -246,8 +271,7 @@ IPacket:ID_PASSENGER_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_PASSENGER_SYNC] Position x, y, z: %f, %f, %f",
 		    passengerData[PR_position][0], passengerData[PR_position][1], passengerData[PR_position][2]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_PASSENGER_SYNC, INVALID_POSITION, 0);
 	}
 	return 1;
 }
@@ -266,8 +290,7 @@ IPacket:ID_UNOCCUPIED_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_UNOCCUPIED_SYNC] Roll x, y, z: %f, %f, %f",
 		    unoccupiedData[PR_roll][0], unoccupiedData[PR_roll][1], unoccupiedData[PR_roll][2]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_UNOCCUPIED_SYNC, INVALID_ROLL, 0);
 	}
 
 	if(CheckValidityData(unoccupiedData[PR_direction][0]) != 1 ||
@@ -278,8 +301,7 @@ IPacket:ID_UNOCCUPIED_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_UNOCCUPIED_SYNC] Direction x, y, z: %f, %f, %f",
 		    unoccupiedData[PR_direction][0], unoccupiedData[PR_direction][1], unoccupiedData[PR_direction][2]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_UNOCCUPIED_SYNC, INVALID_DIRECTION, 0);
 	}
 
 	if(CheckValidityData(unoccupiedData[PR_position][0]) != 1 || CheckValidityData(unoccupiedData[PR_position][1]) != 1 ||
@@ -289,8 +311,7 @@ IPacket:ID_UNOCCUPIED_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_UNOCCUPIED_SYNC] Position x, y, z: %f, %f, %f",
 		    unoccupiedData[PR_position][0], unoccupiedData[PR_position][1], unoccupiedData[PR_position][2]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_UNOCCUPIED_SYNC, INVALID_POSITION, 0);
 	}
 
 	if(CheckValidityData(unoccupiedData[PR_velocity][0]) != 1 || CheckValidityData(unoccupiedData[PR_velocity][1]) != 1 ||
@@ -300,8 +321,7 @@ IPacket:ID_UNOCCUPIED_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_UNOCCUPIED_SYNC] Velocity x, y, z: %f, %f, %f",
 		    unoccupiedData[PR_velocity][0], unoccupiedData[PR_velocity][1], unoccupiedData[PR_velocity][2]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_UNOCCUPIED_SYNC, INVALID_VELOCITY, 0);
 	}
 
 	if(CheckValidityData(unoccupiedData[PR_angularVelocity][0]) != 1 ||
@@ -312,8 +332,7 @@ IPacket:ID_UNOCCUPIED_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_UNOCCUPIED_SYNC] Angular velocity x, y, z: %f, %f, %f",
 		    unoccupiedData[PR_angularVelocity][0], unoccupiedData[PR_angularVelocity][1], unoccupiedData[PR_angularVelocity][2]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_UNOCCUPIED_SYNC, INVALID_ANGULAR_VELOCITY, 0);
 	}
 
 	if(CheckValidityData(unoccupiedData[PR_vehicleHealth]) != 1)
@@ -322,8 +341,7 @@ IPacket:ID_UNOCCUPIED_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_UNOCCUPIED_SYNC] Veh health: %f",
 		    unoccupiedData[PR_vehicleHealth]);
         #endif
-        Kick(playerid);
-        return 0;
+        return KickWithCode(playerid, ID_UNOCCUPIED_SYNC, INVALID_HEALTH, 0);
 	}
 	return 1;
 }
@@ -342,8 +360,7 @@ IPacket:ID_TRAILER_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_TRAILER_SYNC] Position x, y, z: %f, %f, %f",
 		    trailerData[PR_position][0], trailerData[PR_position][1], trailerData[PR_position][2]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_TRAILER_SYNC, INVALID_POSITION, 0);
 	}
 
     if(CheckValidityData(trailerData[PR_quaternion][0]) != 1 || CheckValidityData(trailerData[PR_quaternion][1]) != 1 ||
@@ -353,8 +370,7 @@ IPacket:ID_TRAILER_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_TRAILER_SYNC] Quaternion w, x, y, z: %f, %f, %f, %f",
 		    trailerData[PR_quaternion][0], trailerData[PR_quaternion][1], trailerData[PR_quaternion][2], trailerData[PR_quaternion][3]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_TRAILER_SYNC, INVALID_QUATERNION, 0);
 	}
 
 	if(CheckValidityData(trailerData[PR_velocity][0]) != 1 || CheckValidityData(trailerData[PR_velocity][1]) != 1 ||
@@ -364,8 +380,7 @@ IPacket:ID_TRAILER_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_TRAILER_SYNC] Velocity x, y, z: %f, %f, %f",
 		    trailerData[PR_velocity][0], trailerData[PR_velocity][1], trailerData[PR_velocity][2]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_TRAILER_SYNC, INVALID_VELOCITY, 0);
 	}
 
 	if(CheckValidityData(trailerData[PR_angularVelocity][0]) != 1 ||
@@ -376,8 +391,7 @@ IPacket:ID_TRAILER_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_TRAILER_SYNC] Angular velocity x, y, z: %f, %f, %f",
 		    trailerData[PR_angularVelocity][0], trailerData[PR_angularVelocity][1], trailerData[PR_angularVelocity][2]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_TRAILER_SYNC, INVALID_ANGULAR_VELOCITY, 0);
 	}
 	return 1;
 }
@@ -396,8 +410,7 @@ IPacket:ID_SPECTATOR_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_SPECTATOR_SYNC] Position x, y, z: %f, %f, %f",
 		    spectatorData[PR_position][0], spectatorData[PR_position][1], spectatorData[PR_position][2]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_SPECTATOR_SYNC, INVALID_POSITION, 0);
 	}
 	return 1;
 }
@@ -416,8 +429,7 @@ IPacket:ID_BULLET_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_BULLET_SYNC] Origin x, y, z: %f, %f, %f",
 		    bulletData[PR_origin][0], bulletData[PR_origin][1], bulletData[PR_origin][2]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_BULLET_SYNC, INVALID_ORIGIN, 0);
 	}
 
 	if(CheckValidityData(bulletData[PR_hitPos][0]) != 1 || CheckValidityData(bulletData[PR_hitPos][1]) != 1 ||
@@ -427,8 +439,7 @@ IPacket:ID_BULLET_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_BULLET_SYNC] Hitpos x, y, z: %f, %f, %f",
 		    bulletData[PR_hitPos][0], bulletData[PR_hitPos][1], bulletData[PR_hitPos][2]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_BULLET_SYNC, INVALID_HITPOS, 0);
 	}
 
 	if(CheckValidityData(bulletData[PR_offsets][0]) != 1 || CheckValidityData(bulletData[PR_offsets][1]) != 1 ||
@@ -438,8 +449,7 @@ IPacket:ID_BULLET_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_BULLET_SYNC] Offsets x, y, z: %f, %f, %f",
 		    bulletData[PR_offsets][0], bulletData[PR_offsets][1], bulletData[PR_offsets][2]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_BULLET_SYNC, INVALID_OFFSETS, 0);
 	}
 	return 1;
 }
@@ -458,8 +468,7 @@ IPacket:ID_AIM_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_AIM_SYNC] Camfrontvec x, y, z: %f, %f, %f",
 		    aimData[PR_camFrontVec][0], aimData[PR_camFrontVec][1], aimData[PR_camFrontVec][2]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_AIM_SYNC, INVALID_CAMFRONTVEC, 0);
 	}
 
 	if(CheckValidityData(aimData[PR_camPos][0]) != 1 || CheckValidityData(aimData[PR_camPos][1]) != 1 ||
@@ -469,8 +478,7 @@ IPacket:ID_AIM_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_AIM_SYNC] Campos x, y, z: %f, %f, %f",
 		    aimData[PR_camPos][0], aimData[PR_camPos][1], aimData[PR_camPos][2]);
         #endif
-		Kick(playerid);
-		return 0;
+		return KickWithCode(playerid, ID_AIM_SYNC, INVALID_CAMPOS, 0);
 	}
 
 	if(CheckValidityData(aimData[PR_aimZ]) != 1)
@@ -479,8 +487,7 @@ IPacket:ID_AIM_SYNC(playerid, BitStream:bs)
 		    printf("[Rakcheat debug] [ID_AIM_SYNC] Aimz: %f",
 		    aimData[PR_aimZ]);
         #endif
-        Kick(playerid);
-        return 0;
+        return KickWithCode(playerid, ID_AIM_SYNC, INVALID_AIMZ, 0);
 	}
 	return 1;
 }
