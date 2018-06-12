@@ -6,7 +6,7 @@
 #include <a_samp>
 
 #if !defined PAWNRAKNET_INC_
-    #error You must have Pawn.Raknet include in order to use this one.
+    #error You must have Pawn.RakNet include in order to use this one.
 #endif
 
 #if !defined DEBUG
@@ -31,6 +31,8 @@
 #define INVALID_CAMPOS 16
 #define INVALID_AIMZ 17
 
+#define RAK_MAX_QUAT_WARNINGS 1
+
 static const ID_PLAYER_SYNC = 207;
 static const ID_VEHICLE_SYNC = 200;
 static const ID_PASSENGER_SYNC = 211;
@@ -43,6 +45,12 @@ static const ID_AIM_SYNC = 203;
 #if defined OnRakcheatFilteredData
     forward OnRakcheatFilteredData(playerid, sync, type, subtype);
 #endif
+
+enum rakInfo
+{
+    rakQuatCount
+}
+static RAKInfo[MAX_PLAYERS][rakInfo];
 
 static CheckValidityData(Float:data)
 {
@@ -77,6 +85,32 @@ static KickWithCode(playerid, sync, type, subtype)
     #endif
 }
 
+#if defined _inc_y_hooks || defined _INC_y_hooks
+    hook OnPlayerConnect(playerid)
+#else
+    public OnPlayerConnect(playerid)
+#endif
+{
+    RAKInfo[playerid][rakQuatCount] = 0;
+	#if !defined _inc_y_hooks && !defined _INC_y_hooks\
+	    && defined rak_OnPlayerConnect
+	    return rak_OnPlayerConnect(playerid);
+    #else
+        return 1;
+    #endif
+}
+#if !defined _inc_y_hooks && !defined _INC_y_hooks
+    #if defined _ALS_OnPlayerConnect
+        #undef OnPlayerConnect
+    #else
+        #define _ALS_OnPlayerConnect
+    #endif
+    #define OnPlayerConnect rak_OnPlayerConnect
+    #if defined rak_OnPlayerConnect
+        forward rak_OnPlayerConnect(playerid);
+    #endif
+#endif
+
 IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 {
     new onFootData[PR_OnFootSync];
@@ -102,6 +136,26 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 		    onFootData[PR_quaternion][0], onFootData[PR_quaternion][1], onFootData[PR_quaternion][2], onFootData[PR_quaternion][3]);
         #endif
 		return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_QUATERNION, 0);
+	}
+	
+	new Float:rak_ang = atan2(floatmul(2.0, floatadd(floatmul(onFootData[PR_quaternion][2], onFootData[PR_quaternion][3]),
+	floatmul(onFootData[PR_quaternion][0], onFootData[PR_quaternion][1]))), floatadd(floatsub(floatsub(floatpower(onFootData[PR_quaternion][0], 2.0),
+	floatpower(onFootData[PR_quaternion][1], 2.0)), floatpower(onFootData[PR_quaternion][2], 2.0)),
+	floatpower(onFootData[PR_quaternion][3], 2.0)));
+	if(floatabs(rak_ang) > 85.0 && onFootData[PR_specialAction] == SPECIAL_ACTION_NONE)
+	{
+	    if(++RAKInfo[playerid][rakQuatCount] > RAK_MAX_QUAT_WARNINGS)
+		{
+		    #if defined DEBUG
+			    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Quaternion w, x, y, z: %f, %f, %f, %f, angle: %f",
+			    onFootData[PR_quaternion][0], onFootData[PR_quaternion][1], onFootData[PR_quaternion][2], onFootData[PR_quaternion][3], rak_ang);
+	        #endif
+			return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_QUATERNION, 1);
+		}
+	}
+	else
+	{
+	    RAKInfo[playerid][rakQuatCount] = 0;
 	}
 
 	if(CheckValidityData(onFootData[PR_velocity][0]) != 1 || CheckValidityData(onFootData[PR_velocity][1]) != 1 ||
@@ -129,12 +183,12 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 	{
 	    if(0 < onFootData[PR_surfingVehicleId] < MAX_VEHICLES)
 		{
-		    new ac_model = GetVehicleModel(onFootData[PR_surfingVehicleId]);
-		    if(ac_model == 0)
+		    new rak_model = GetVehicleModel(onFootData[PR_surfingVehicleId]);
+		    if(rak_model == 0)
 			{
 			    #if defined DEBUG
 				    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Veh model: %d, vehicleid: %d",
-				    ac_model, onFootData[PR_surfingVehicleId]);
+				    rak_model, onFootData[PR_surfingVehicleId]);
 		        #endif
 		        return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_SURFING, 0);
 			}
@@ -145,7 +199,7 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 				{
 				    #if defined DEBUG
 					    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Veh model: %d, vehicleid: %d, surfing offsets x, y, z: %f, %f, %f",
-					    ac_model, onFootData[PR_surfingVehicleId], onFootData[PR_surfingOffsets][0], onFootData[PR_surfingOffsets][1], onFootData[PR_surfingOffsets][2]);
+					    rak_model, onFootData[PR_surfingVehicleId], onFootData[PR_surfingOffsets][0], onFootData[PR_surfingOffsets][1], onFootData[PR_surfingOffsets][2]);
 			        #endif
 			        return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_SURFING_OFFSETS, 1);
 				}
@@ -153,12 +207,12 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 		}
 		else if(MAX_VEHICLES <= onFootData[PR_surfingVehicleId] < MAX_OBJECTS + MAX_VEHICLES)
 		{
-		    new ac_object = IsValidObject(onFootData[PR_surfingVehicleId]);
-		    if(ac_object == 0)
+		    new rak_object = IsValidObject(onFootData[PR_surfingVehicleId]);
+		    if(rak_object == 0)
 			{
 			    #if defined DEBUG
 				    printf("[Rakcheat debug] [ID_PLAYER_SYNC] IsValidObject: %d, objectid: %d",
-				    ac_object, onFootData[PR_surfingVehicleId]);
+				    rak_object, onFootData[PR_surfingVehicleId]);
 		        #endif
 		        return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_SURFING, 1);
 			}
