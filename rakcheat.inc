@@ -54,16 +54,18 @@ static RAKInfo[MAX_PLAYERS][rakInfo];
 
 static CheckValidityData(Float:data)
 {
-    if(floatcmp(data, data) != 0)
+    if(floatcmp(data, data) != 0 || floatcmp(data, Float:0x7F800000) == 0 || floatcmp(data, Float:0xFF800000) == 0)
 	{
-		return 0;
+	    return 0;
 	}
-	new check[20];
-	format(check, sizeof check, "%f", data);
-    if(strcmp(check, "NaN", false) == 0 || strcmp(check, "./,),(-*,(.((((((", false) == 0 || strcmp(check, "-./,),(-*,(.((((((", false) == 0)
-	{
-		return 0;
-	}
+	#if defined RAK_ADDITIONAL_CHECKS
+		new check[20];
+		format(check, sizeof check, "%f", data);
+	    if(strcmp(check, "NaN", false) == 0 || strcmp(check, "./,),(-*,(.((((((", false) == 0 || strcmp(check, "-./,),(-*,(.((((((", false) == 0)
+		{
+		    return 0;
+		}
+    #endif
 	return 1;
 }
 
