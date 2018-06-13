@@ -533,14 +533,10 @@ IPacket:ID_BULLET_SYNC(playerid, BitStream:bs)
 	}
 
 	#if defined RAK_ENABLED_SHOT
-	    if(bulletData[PR_hitType] == BULLET_HIT_TYPE_PLAYER && bulletData[PR_hitId] != INVALID_PLAYER_ID)
+	    if(bulletData[PR_hitType] != BULLET_HIT_TYPE_NONE)
 		{
 		    new Float:rak_X, Float:rak_Y, Float:rak_Z;
-		    new Float:rak_vX, Float:rak_vY, Float:rak_vZ;
-
 		    GetPlayerPos(playerid, rak_X, rak_Y, rak_Z);
-		    GetPlayerPos(bulletData[PR_hitId], rak_vX, rak_vY, rak_vZ);
-
 		    if(floatcmp(bulletData[PR_origin][0], rak_X) == 0 || floatcmp(bulletData[PR_origin][1], rak_Y) == 0 || floatcmp(bulletData[PR_origin][2], rak_Z) == 0)
 			{
 			    #if defined RAK_DEBUG
@@ -549,7 +545,13 @@ IPacket:ID_BULLET_SYNC(playerid, BitStream:bs)
 		        #endif
 				return KickWithCode(playerid, ID_BULLET_SYNC, RAK_INVALID_SHOT, 0);
 			}
-			else if(floatcmp(bulletData[PR_hitPos][0], rak_vX) == 0 || floatcmp(bulletData[PR_hitPos][1], rak_vY) == 0 ||
+		}
+
+	    if(bulletData[PR_hitType] == BULLET_HIT_TYPE_PLAYER && bulletData[PR_hitId] != INVALID_PLAYER_ID)
+		{
+		    new Float:rak_vX, Float:rak_vY, Float:rak_vZ;
+		    GetPlayerPos(bulletData[PR_hitId], rak_vX, rak_vY, rak_vZ);
+		    if(floatcmp(bulletData[PR_hitPos][0], rak_vX) == 0 || floatcmp(bulletData[PR_hitPos][1], rak_vY) == 0 ||
 			floatcmp(bulletData[PR_hitPos][2], rak_vZ) == 0)
 			{
 			    #if defined RAK_DEBUG
@@ -561,28 +563,16 @@ IPacket:ID_BULLET_SYNC(playerid, BitStream:bs)
 		}
 		else if(bulletData[PR_hitType] == BULLET_HIT_TYPE_VEHICLE && bulletData[PR_hitId] != INVALID_VEHICLE_ID)
 		{
-		    new Float:rak_X, Float:rak_Y, Float:rak_Z;
 		    new Float:rak_vX, Float:rak_vY, Float:rak_vZ;
-
-		    GetPlayerPos(playerid, rak_X, rak_Y, rak_Z);
 		    GetVehiclePos(bulletData[PR_hitId], rak_vX, rak_vY, rak_vZ);
-
-		    if(floatcmp(bulletData[PR_origin][0], rak_X) == 0 || floatcmp(bulletData[PR_origin][1], rak_Y) == 0 || floatcmp(bulletData[PR_origin][2], rak_Z) == 0)
-			{
-			    #if defined RAK_DEBUG
-				    printf("[Rakcheat debug] [ID_BULLET_SYNC] Pos x, y, z: %f, %f, %f, sync x, y, z: %f, %f, %f",
-				    rak_X, rak_Y, rak_Z, bulletData[PR_origin][0], bulletData[PR_origin][1], bulletData[PR_origin][2]);
-		        #endif
-				return KickWithCode(playerid, ID_BULLET_SYNC, RAK_INVALID_SHOT, 2);
-			}
-			else if(floatcmp(bulletData[PR_hitPos][0], rak_vX) == 0 || floatcmp(bulletData[PR_hitPos][1], rak_vY) == 0 ||
+		    if(floatcmp(bulletData[PR_hitPos][0], rak_vX) == 0 || floatcmp(bulletData[PR_hitPos][1], rak_vY) == 0 ||
 			floatcmp(bulletData[PR_hitPos][2], rak_vZ) == 0)
 			{
 			    #if defined RAK_DEBUG
 				    printf("[Rakcheat debug] [ID_BULLET_SYNC] Pos x, y, z: %f, %f, %f, sync x, y, z: %f, %f, %f",
 				    rak_vX, rak_vY, rak_vZ, bulletData[PR_hitPos][0], bulletData[PR_hitPos][1], bulletData[PR_hitPos][2]);
 		        #endif
-				return KickWithCode(playerid, ID_BULLET_SYNC, RAK_INVALID_SHOT, 3);
+				return KickWithCode(playerid, ID_BULLET_SYNC, RAK_INVALID_SHOT, 2);
 			}
 		}
     #endif
