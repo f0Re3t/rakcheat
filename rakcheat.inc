@@ -9,44 +9,68 @@
     #error You must have Pawn.RakNet include in order to use this one.
 #endif
 
-#if !defined DEBUG
-    #define DEBUG
+#if !defined RAK_DEBUG
+    #define RAK_DEBUG
 #endif
 
-#define INVALID_POSITION 1
-#define INVALID_QUATERNION 2
-#define INVALID_VELOCITY 3
-#define INVALID_SURFING_OFFSETS 4
-#define INVALID_SURFING 5
-#define INVALID_ANIMATION_FLAGS 6
-#define INVALID_HEALTH 7
-#define INVALID_TRAIN_SPEED 8
-#define INVALID_ROLL 9
-#define INVALID_DIRECTION 10
-#define INVALID_ANGULAR_VELOCITY 11
-#define INVALID_ORIGIN 12
-#define INVALID_HITPOS 13
-#define INVALID_OFFSETS 14
-#define INVALID_CAMFRONTVEC 15
-#define INVALID_CAMPOS 16
-#define INVALID_AIMZ 17
+#if !defined RAK_MAX_QUAT_WARNINGS
+    #define RAK_MAX_QUAT_WARNINGS 1
+#endif
 
-#define RAK_MAX_QUAT_WARNINGS 1
+#if __Pawn >= 0x3A && defined __PawnBuild
+    #if __Pawn > 0x3A || __PawnBuild >= 2
+        #define static_enum static enum
+    #endif
+#endif
+#if !defined static_enum
+    #define static_enum enum
+#endif
 
-static const ID_PLAYER_SYNC = 207;
-static const ID_VEHICLE_SYNC = 200;
-static const ID_PASSENGER_SYNC = 211;
-static const ID_UNOCCUPIED_SYNC = 209;
-static const ID_TRAILER_SYNC = 210;
-static const ID_SPECTATOR_SYNC = 212;
-static const ID_BULLET_SYNC = 206;
-static const ID_AIM_SYNC = 203;
+#if __Pawn >= 0x3A && defined __PawnBuild
+    #if __Pawn > 0x3A || __PawnBuild >= 2
+        #define static_const(%0) static enum { %0 }
+    #endif
+#endif
+#if !defined static_const
+    #define static_const(%0) static const %0
+#endif
+
+static_enum
+{
+    RAK_INVALID_POSITION = 1,
+    RAK_INVALID_QUATERNION,
+    RAK_INVALID_VELOCITY,
+    RAK_INVALID_SURFING_OFFSETS,
+    RAK_INVALID_SURFING,
+    RAK_INVALID_ANIMATION_FLAGS,
+    RAK_INVALID_HEALTH,
+    RAK_INVALID_TRAIN_SPEED,
+    RAK_INVALID_ROLL,
+    RAK_INVALID_DIRECTION,
+    RAK_INVALID_ANGULAR_VELOCITY,
+    RAK_INVALID_ORIGIN,
+    RAK_INVALID_HITPOS,
+    RAK_INVALID_OFFSETS,
+    RAK_INVALID_CAMFRONTVEC,
+    RAK_INVALID_CAMPOS,
+    RAK_INVALID_AIMZ,
+    RAK_INVALID_SHOT
+}
+
+static_const(ID_PLAYER_SYNC = 207);
+static_const(ID_VEHICLE_SYNC = 200);
+static_const(ID_PASSENGER_SYNC = 211);
+static_const(ID_UNOCCUPIED_SYNC = 209);
+static_const(ID_TRAILER_SYNC = 210);
+static_const(ID_SPECTATOR_SYNC = 212);
+static_const(ID_BULLET_SYNC = 206);
+static_const(ID_AIM_SYNC = 203);
 
 #if defined OnRakcheatFilteredData
     forward OnRakcheatFilteredData(playerid, sync, type, subtype);
 #endif
 
-enum rakInfo
+static_enum rakInfo
 {
     rakQuatCount
 }
@@ -75,7 +99,7 @@ static KickWithCode(playerid, sync, type, subtype)
 	{
 		return 0;
 	}
-	#if defined DEBUG
+	#if defined RAK_DEBUG
 	    printf("[Rakcheat] Suspicion on the ID %d. Reason code: %03d (%d)", playerid, type, subtype);
     #endif
     #if defined OnRakcheatFilteredData
@@ -123,23 +147,23 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 	if(CheckValidityData(onFootData[PR_position][0]) != 1 || CheckValidityData(onFootData[PR_position][1]) != 1 ||
 	CheckValidityData(onFootData[PR_position][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Position x, y, z: %f, %f, %f",
 		    onFootData[PR_position][0], onFootData[PR_position][1], onFootData[PR_position][2]);
         #endif
-		return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_POSITION, 0);
+		return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_POSITION, 0);
 	}
 
     if(CheckValidityData(onFootData[PR_quaternion][0]) != 1 || CheckValidityData(onFootData[PR_quaternion][1]) != 1 ||
 	CheckValidityData(onFootData[PR_quaternion][2]) != 1 || CheckValidityData(onFootData[PR_quaternion][3]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Quaternion w, x, y, z: %f, %f, %f, %f",
 		    onFootData[PR_quaternion][0], onFootData[PR_quaternion][1], onFootData[PR_quaternion][2], onFootData[PR_quaternion][3]);
         #endif
-		return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_QUATERNION, 0);
+		return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_QUATERNION, 0);
 	}
-	
+
 	new Float:rak_ang = atan2(floatmul(2.0, floatadd(floatmul(onFootData[PR_quaternion][2], onFootData[PR_quaternion][3]),
 	floatmul(onFootData[PR_quaternion][0], onFootData[PR_quaternion][1]))), floatadd(floatsub(floatsub(floatpower(onFootData[PR_quaternion][0], 2.0),
 	floatpower(onFootData[PR_quaternion][1], 2.0)), floatpower(onFootData[PR_quaternion][2], 2.0)),
@@ -148,11 +172,11 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 	{
 	    if(++RAKInfo[playerid][rakQuatCount] > RAK_MAX_QUAT_WARNINGS)
 		{
-		    #if defined DEBUG
+		    #if defined RAK_DEBUG
 			    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Quaternion w, x, y, z: %f, %f, %f, %f, angle: %f",
 			    onFootData[PR_quaternion][0], onFootData[PR_quaternion][1], onFootData[PR_quaternion][2], onFootData[PR_quaternion][3], rak_ang);
 	        #endif
-			return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_QUATERNION, 1);
+			return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_QUATERNION, 1);
 		}
 	}
 	else
@@ -163,22 +187,22 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 	if(CheckValidityData(onFootData[PR_velocity][0]) != 1 || CheckValidityData(onFootData[PR_velocity][1]) != 1 ||
 	CheckValidityData(onFootData[PR_velocity][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Velocity x, y, z: %f, %f, %f",
 		    onFootData[PR_velocity][0], onFootData[PR_velocity][1], onFootData[PR_velocity][2]);
         #endif
-        return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_VELOCITY, 0);
+        return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_VELOCITY, 0);
 	}
 
 	if(CheckValidityData(onFootData[PR_surfingOffsets][0]) != 1 ||
 	CheckValidityData(onFootData[PR_surfingOffsets][1]) != 1 ||
 	CheckValidityData(onFootData[PR_surfingOffsets][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Surfing offsets x, y, z: %f, %f, %f",
 		    onFootData[PR_surfingOffsets][0], onFootData[PR_surfingOffsets][1], onFootData[PR_surfingOffsets][2]);
         #endif
-        return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_SURFING_OFFSETS, 0);
+        return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_SURFING_OFFSETS, 0);
 	}
 
 	if(onFootData[PR_surfingVehicleId] != 0)
@@ -188,22 +212,22 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 		    new rak_model = GetVehicleModel(onFootData[PR_surfingVehicleId]);
 		    if(rak_model == 0)
 			{
-			    #if defined DEBUG
+			    #if defined RAK_DEBUG
 				    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Veh model: %d, vehicleid: %d",
 				    rak_model, onFootData[PR_surfingVehicleId]);
 		        #endif
-		        return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_SURFING, 0);
+		        return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_SURFING, 0);
 			}
 			else
 			{
 			    if(floatabs(onFootData[PR_surfingOffsets][0]) >= 25.0 || floatabs(onFootData[PR_surfingOffsets][1]) >= 25.0 ||
 			    floatabs(onFootData[PR_surfingOffsets][2]) >= 25.0)
 				{
-				    #if defined DEBUG
+				    #if defined RAK_DEBUG
 					    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Veh model: %d, vehicleid: %d, surfing offsets x, y, z: %f, %f, %f",
 					    rak_model, onFootData[PR_surfingVehicleId], onFootData[PR_surfingOffsets][0], onFootData[PR_surfingOffsets][1], onFootData[PR_surfingOffsets][2]);
 			        #endif
-			        return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_SURFING_OFFSETS, 1);
+			        return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_SURFING_OFFSETS, 1);
 				}
 			}
 		}
@@ -212,23 +236,23 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 		    new rak_object = IsValidObject(onFootData[PR_surfingVehicleId]);
 		    if(rak_object == 0)
 			{
-			    #if defined DEBUG
+			    #if defined RAK_DEBUG
 				    printf("[Rakcheat debug] [ID_PLAYER_SYNC] IsValidObject: %d, objectid: %d",
 				    rak_object, onFootData[PR_surfingVehicleId]);
 		        #endif
-		        return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_SURFING, 1);
+		        return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_SURFING, 1);
 			}
 			else
 			{
 			    if(floatabs(onFootData[PR_surfingOffsets][0]) >= 101.0 || floatabs(onFootData[PR_surfingOffsets][1]) >= 101.0 ||
 			    floatabs(onFootData[PR_surfingOffsets][2]) >= 101.0)
 				{
-				    #if defined DEBUG
+				    #if defined RAK_DEBUG
 					    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Object modelid: %d, objectid: %d, surfing offsets x, y, z: %f, %f, %f",
 					    GetObjectModel(onFootData[PR_surfingVehicleId]), onFootData[PR_surfingVehicleId], onFootData[PR_surfingOffsets][0],
 					    onFootData[PR_surfingOffsets][1], onFootData[PR_surfingOffsets][2]);
 			        #endif
-			        return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_SURFING_OFFSETS, 2);
+			        return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_SURFING_OFFSETS, 2);
 				}
 			}
 		}
@@ -236,22 +260,22 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 		{
 		    if(onFootData[PR_surfingVehicleId] != INVALID_VEHICLE_ID)
 			{
-			    #if defined DEBUG
+			    #if defined RAK_DEBUG
 				    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Surfing: %d",
 				    onFootData[PR_surfingVehicleId]);
 		        #endif
-		        return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_SURFING, 2);
+		        return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_SURFING, 2);
 			}
 		}
 	}
 
 	if(onFootData[PR_animationFlags] == 0)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Animation flags: %d",
 		    onFootData[PR_animationFlags]);
         #endif
-        return KickWithCode(playerid, ID_PLAYER_SYNC, INVALID_ANIMATION_FLAGS, 0);
+        return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_ANIMATION_FLAGS, 0);
 	}
 	return 1;
 }
@@ -266,49 +290,49 @@ IPacket:ID_VEHICLE_SYNC(playerid, BitStream:bs)
     if(CheckValidityData(inCarData[PR_quaternion][0]) != 1 || CheckValidityData(inCarData[PR_quaternion][1]) != 1 ||
 	CheckValidityData(inCarData[PR_quaternion][2]) != 1 || CheckValidityData(inCarData[PR_quaternion][3]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_VEHICLE_SYNC] Quaternion w, x, y, z: %f, %f, %f, %f",
 		    inCarData[PR_quaternion][0], inCarData[PR_quaternion][1], inCarData[PR_quaternion][2], inCarData[PR_quaternion][3]);
         #endif
-		return KickWithCode(playerid, ID_VEHICLE_SYNC, INVALID_QUATERNION, 0);
+		return KickWithCode(playerid, ID_VEHICLE_SYNC, RAK_INVALID_QUATERNION, 0);
 	}
 
 	if(CheckValidityData(inCarData[PR_position][0]) != 1 || CheckValidityData(inCarData[PR_position][1]) != 1 ||
 	CheckValidityData(inCarData[PR_position][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_VEHICLE_SYNC] Position x, y, z: %f, %f, %f",
 		    inCarData[PR_position][0], inCarData[PR_position][1], inCarData[PR_position][2]);
         #endif
-		return KickWithCode(playerid, ID_VEHICLE_SYNC, INVALID_POSITION, 0);
+		return KickWithCode(playerid, ID_VEHICLE_SYNC, RAK_INVALID_POSITION, 0);
 	}
 
 	if(CheckValidityData(inCarData[PR_velocity][0]) != 1 || CheckValidityData(inCarData[PR_velocity][1]) != 1 ||
 	CheckValidityData(inCarData[PR_velocity][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_VEHICLE_SYNC] Velocity x, y, z: %f, %f, %f",
 		    inCarData[PR_velocity][0], inCarData[PR_velocity][1], inCarData[PR_velocity][2]);
         #endif
-        return KickWithCode(playerid, ID_VEHICLE_SYNC, INVALID_VELOCITY, 0);
+        return KickWithCode(playerid, ID_VEHICLE_SYNC, RAK_INVALID_VELOCITY, 0);
 	}
 
 	if(CheckValidityData(inCarData[PR_vehicleHealth]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_VEHICLE_SYNC] Veh health: %f",
 		    inCarData[PR_vehicleHealth]);
         #endif
-        return KickWithCode(playerid, ID_VEHICLE_SYNC, INVALID_HEALTH, 0);
+        return KickWithCode(playerid, ID_VEHICLE_SYNC, RAK_INVALID_HEALTH, 0);
 	}
 
 	if(CheckValidityData(inCarData[PR_trainSpeed]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_VEHICLE_SYNC] Train speed: %f",
 		    inCarData[PR_trainSpeed]);
         #endif
-        return KickWithCode(playerid, ID_VEHICLE_SYNC, INVALID_TRAIN_SPEED, 0);
+        return KickWithCode(playerid, ID_VEHICLE_SYNC, RAK_INVALID_TRAIN_SPEED, 0);
 	}
 	return 1;
 }
@@ -323,11 +347,11 @@ IPacket:ID_PASSENGER_SYNC(playerid, BitStream:bs)
 	if(CheckValidityData(passengerData[PR_position][0]) != 1 || CheckValidityData(passengerData[PR_position][1]) != 1 ||
 	CheckValidityData(passengerData[PR_position][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_PASSENGER_SYNC] Position x, y, z: %f, %f, %f",
 		    passengerData[PR_position][0], passengerData[PR_position][1], passengerData[PR_position][2]);
         #endif
-		return KickWithCode(playerid, ID_PASSENGER_SYNC, INVALID_POSITION, 0);
+		return KickWithCode(playerid, ID_PASSENGER_SYNC, RAK_INVALID_POSITION, 0);
 	}
 	return 1;
 }
@@ -342,62 +366,62 @@ IPacket:ID_UNOCCUPIED_SYNC(playerid, BitStream:bs)
 	if(CheckValidityData(unoccupiedData[PR_roll][0]) != 1 || CheckValidityData(unoccupiedData[PR_roll][1]) != 1 ||
 	CheckValidityData(unoccupiedData[PR_roll][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_UNOCCUPIED_SYNC] Roll x, y, z: %f, %f, %f",
 		    unoccupiedData[PR_roll][0], unoccupiedData[PR_roll][1], unoccupiedData[PR_roll][2]);
         #endif
-		return KickWithCode(playerid, ID_UNOCCUPIED_SYNC, INVALID_ROLL, 0);
+		return KickWithCode(playerid, ID_UNOCCUPIED_SYNC, RAK_INVALID_ROLL, 0);
 	}
 
 	if(CheckValidityData(unoccupiedData[PR_direction][0]) != 1 ||
 	CheckValidityData(unoccupiedData[PR_direction][1]) != 1 ||
 	CheckValidityData(unoccupiedData[PR_direction][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_UNOCCUPIED_SYNC] Direction x, y, z: %f, %f, %f",
 		    unoccupiedData[PR_direction][0], unoccupiedData[PR_direction][1], unoccupiedData[PR_direction][2]);
         #endif
-		return KickWithCode(playerid, ID_UNOCCUPIED_SYNC, INVALID_DIRECTION, 0);
+		return KickWithCode(playerid, ID_UNOCCUPIED_SYNC, RAK_INVALID_DIRECTION, 0);
 	}
 
 	if(CheckValidityData(unoccupiedData[PR_position][0]) != 1 || CheckValidityData(unoccupiedData[PR_position][1]) != 1 ||
 	CheckValidityData(unoccupiedData[PR_position][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_UNOCCUPIED_SYNC] Position x, y, z: %f, %f, %f",
 		    unoccupiedData[PR_position][0], unoccupiedData[PR_position][1], unoccupiedData[PR_position][2]);
         #endif
-		return KickWithCode(playerid, ID_UNOCCUPIED_SYNC, INVALID_POSITION, 0);
+		return KickWithCode(playerid, ID_UNOCCUPIED_SYNC, RAK_INVALID_POSITION, 0);
 	}
 
 	if(CheckValidityData(unoccupiedData[PR_velocity][0]) != 1 || CheckValidityData(unoccupiedData[PR_velocity][1]) != 1 ||
 	CheckValidityData(unoccupiedData[PR_velocity][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_UNOCCUPIED_SYNC] Velocity x, y, z: %f, %f, %f",
 		    unoccupiedData[PR_velocity][0], unoccupiedData[PR_velocity][1], unoccupiedData[PR_velocity][2]);
         #endif
-		return KickWithCode(playerid, ID_UNOCCUPIED_SYNC, INVALID_VELOCITY, 0);
+		return KickWithCode(playerid, ID_UNOCCUPIED_SYNC, RAK_INVALID_VELOCITY, 0);
 	}
 
 	if(CheckValidityData(unoccupiedData[PR_angularVelocity][0]) != 1 ||
 	CheckValidityData(unoccupiedData[PR_angularVelocity][1]) != 1 ||
 	CheckValidityData(unoccupiedData[PR_angularVelocity][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_UNOCCUPIED_SYNC] Angular velocity x, y, z: %f, %f, %f",
 		    unoccupiedData[PR_angularVelocity][0], unoccupiedData[PR_angularVelocity][1], unoccupiedData[PR_angularVelocity][2]);
         #endif
-		return KickWithCode(playerid, ID_UNOCCUPIED_SYNC, INVALID_ANGULAR_VELOCITY, 0);
+		return KickWithCode(playerid, ID_UNOCCUPIED_SYNC, RAK_INVALID_ANGULAR_VELOCITY, 0);
 	}
 
 	if(CheckValidityData(unoccupiedData[PR_vehicleHealth]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_UNOCCUPIED_SYNC] Veh health: %f",
 		    unoccupiedData[PR_vehicleHealth]);
         #endif
-        return KickWithCode(playerid, ID_UNOCCUPIED_SYNC, INVALID_HEALTH, 0);
+        return KickWithCode(playerid, ID_UNOCCUPIED_SYNC, RAK_INVALID_HEALTH, 0);
 	}
 	return 1;
 }
@@ -412,42 +436,42 @@ IPacket:ID_TRAILER_SYNC(playerid, BitStream:bs)
 	if(CheckValidityData(trailerData[PR_position][0]) != 1 || CheckValidityData(trailerData[PR_position][1]) != 1 ||
 	CheckValidityData(trailerData[PR_position][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_TRAILER_SYNC] Position x, y, z: %f, %f, %f",
 		    trailerData[PR_position][0], trailerData[PR_position][1], trailerData[PR_position][2]);
         #endif
-		return KickWithCode(playerid, ID_TRAILER_SYNC, INVALID_POSITION, 0);
+		return KickWithCode(playerid, ID_TRAILER_SYNC, RAK_INVALID_POSITION, 0);
 	}
 
     if(CheckValidityData(trailerData[PR_quaternion][0]) != 1 || CheckValidityData(trailerData[PR_quaternion][1]) != 1 ||
 	CheckValidityData(trailerData[PR_quaternion][2]) != 1 || CheckValidityData(trailerData[PR_quaternion][3]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_TRAILER_SYNC] Quaternion w, x, y, z: %f, %f, %f, %f",
 		    trailerData[PR_quaternion][0], trailerData[PR_quaternion][1], trailerData[PR_quaternion][2], trailerData[PR_quaternion][3]);
         #endif
-		return KickWithCode(playerid, ID_TRAILER_SYNC, INVALID_QUATERNION, 0);
+		return KickWithCode(playerid, ID_TRAILER_SYNC, RAK_INVALID_QUATERNION, 0);
 	}
 
 	if(CheckValidityData(trailerData[PR_velocity][0]) != 1 || CheckValidityData(trailerData[PR_velocity][1]) != 1 ||
 	CheckValidityData(trailerData[PR_velocity][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_TRAILER_SYNC] Velocity x, y, z: %f, %f, %f",
 		    trailerData[PR_velocity][0], trailerData[PR_velocity][1], trailerData[PR_velocity][2]);
         #endif
-		return KickWithCode(playerid, ID_TRAILER_SYNC, INVALID_VELOCITY, 0);
+		return KickWithCode(playerid, ID_TRAILER_SYNC, RAK_INVALID_VELOCITY, 0);
 	}
 
 	if(CheckValidityData(trailerData[PR_angularVelocity][0]) != 1 ||
 	CheckValidityData(trailerData[PR_angularVelocity][1]) != 1 ||
 	CheckValidityData(trailerData[PR_angularVelocity][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_TRAILER_SYNC] Angular velocity x, y, z: %f, %f, %f",
 		    trailerData[PR_angularVelocity][0], trailerData[PR_angularVelocity][1], trailerData[PR_angularVelocity][2]);
         #endif
-		return KickWithCode(playerid, ID_TRAILER_SYNC, INVALID_ANGULAR_VELOCITY, 0);
+		return KickWithCode(playerid, ID_TRAILER_SYNC, RAK_INVALID_ANGULAR_VELOCITY, 0);
 	}
 	return 1;
 }
@@ -462,11 +486,11 @@ IPacket:ID_SPECTATOR_SYNC(playerid, BitStream:bs)
 	if(CheckValidityData(spectatorData[PR_position][0]) != 1 || CheckValidityData(spectatorData[PR_position][1]) != 1 ||
 	CheckValidityData(spectatorData[PR_position][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_SPECTATOR_SYNC] Position x, y, z: %f, %f, %f",
 		    spectatorData[PR_position][0], spectatorData[PR_position][1], spectatorData[PR_position][2]);
         #endif
-		return KickWithCode(playerid, ID_SPECTATOR_SYNC, INVALID_POSITION, 0);
+		return KickWithCode(playerid, ID_SPECTATOR_SYNC, RAK_INVALID_POSITION, 0);
 	}
 	return 1;
 }
@@ -481,32 +505,87 @@ IPacket:ID_BULLET_SYNC(playerid, BitStream:bs)
 	if(CheckValidityData(bulletData[PR_origin][0]) != 1 || CheckValidityData(bulletData[PR_origin][1]) != 1 ||
 	CheckValidityData(bulletData[PR_origin][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_BULLET_SYNC] Origin x, y, z: %f, %f, %f",
 		    bulletData[PR_origin][0], bulletData[PR_origin][1], bulletData[PR_origin][2]);
         #endif
-		return KickWithCode(playerid, ID_BULLET_SYNC, INVALID_ORIGIN, 0);
+		return KickWithCode(playerid, ID_BULLET_SYNC, RAK_INVALID_ORIGIN, 0);
 	}
 
 	if(CheckValidityData(bulletData[PR_hitPos][0]) != 1 || CheckValidityData(bulletData[PR_hitPos][1]) != 1 ||
 	CheckValidityData(bulletData[PR_hitPos][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_BULLET_SYNC] Hitpos x, y, z: %f, %f, %f",
 		    bulletData[PR_hitPos][0], bulletData[PR_hitPos][1], bulletData[PR_hitPos][2]);
         #endif
-		return KickWithCode(playerid, ID_BULLET_SYNC, INVALID_HITPOS, 0);
+		return KickWithCode(playerid, ID_BULLET_SYNC, RAK_INVALID_HITPOS, 0);
 	}
 
 	if(CheckValidityData(bulletData[PR_offsets][0]) != 1 || CheckValidityData(bulletData[PR_offsets][1]) != 1 ||
 	CheckValidityData(bulletData[PR_offsets][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_BULLET_SYNC] Offsets x, y, z: %f, %f, %f",
 		    bulletData[PR_offsets][0], bulletData[PR_offsets][1], bulletData[PR_offsets][2]);
         #endif
-		return KickWithCode(playerid, ID_BULLET_SYNC, INVALID_OFFSETS, 0);
+		return KickWithCode(playerid, ID_BULLET_SYNC, RAK_INVALID_OFFSETS, 0);
 	}
+
+	#if defined RAK_ENABLED_SHOT
+	    if(bulletData[PR_hitType] == BULLET_HIT_TYPE_PLAYER && bulletData[PR_hitId] != INVALID_PLAYER_ID)
+		{
+		    new Float:rak_X, Float:rak_Y, Float:rak_Z;
+		    new Float:rak_vX, Float:rak_vY, Float:rak_vZ;
+
+		    GetPlayerPos(playerid, rak_X, rak_Y, rak_Z);
+		    GetPlayerPos(bulletData[PR_hitId], rak_vX, rak_vY, rak_vZ);
+
+		    if(floatcmp(bulletData[PR_origin][0], rak_X) == 0 || floatcmp(bulletData[PR_origin][1], rak_Y) == 0 || floatcmp(bulletData[PR_origin][2], rak_Z) == 0)
+			{
+			    #if defined RAK_DEBUG
+				    printf("[Rakcheat debug] [ID_BULLET_SYNC] Pos x, y, z: %f, %f, %f, sync x, y, z: %f, %f, %f",
+				    rak_X, rak_Y, rak_Z, bulletData[PR_origin][0], bulletData[PR_origin][1], bulletData[PR_origin][2]);
+		        #endif
+				return KickWithCode(playerid, ID_BULLET_SYNC, RAK_INVALID_SHOT, 0);
+			}
+			else if(floatcmp(bulletData[PR_hitPos][0], rak_vX) == 0 || floatcmp(bulletData[PR_hitPos][1], rak_vY) == 0 ||
+			floatcmp(bulletData[PR_hitPos][2], rak_vZ) == 0)
+			{
+			    #if defined RAK_DEBUG
+				    printf("[Rakcheat debug] [ID_BULLET_SYNC] Pos x, y, z: %f, %f, %f, sync x, y, z: %f, %f, %f",
+				    rak_vX, rak_vY, rak_vZ, bulletData[PR_hitPos][0], bulletData[PR_hitPos][1], bulletData[PR_hitPos][2]);
+		        #endif
+				return KickWithCode(playerid, ID_BULLET_SYNC, RAK_INVALID_SHOT, 1);
+			}
+		}
+		else if(bulletData[PR_hitType] == BULLET_HIT_TYPE_VEHICLE && bulletData[PR_hitId] != INVALID_VEHICLE_ID)
+		{
+		    new Float:rak_X, Float:rak_Y, Float:rak_Z;
+		    new Float:rak_vX, Float:rak_vY, Float:rak_vZ;
+
+		    GetPlayerPos(playerid, rak_X, rak_Y, rak_Z);
+		    GetVehiclePos(bulletData[PR_hitId], rak_vX, rak_vY, rak_vZ);
+
+		    if(floatcmp(bulletData[PR_origin][0], rak_X) == 0 || floatcmp(bulletData[PR_origin][1], rak_Y) == 0 || floatcmp(bulletData[PR_origin][2], rak_Z) == 0)
+			{
+			    #if defined RAK_DEBUG
+				    printf("[Rakcheat debug] [ID_BULLET_SYNC] Pos x, y, z: %f, %f, %f, sync x, y, z: %f, %f, %f",
+				    rak_X, rak_Y, rak_Z, bulletData[PR_origin][0], bulletData[PR_origin][1], bulletData[PR_origin][2]);
+		        #endif
+				return KickWithCode(playerid, ID_BULLET_SYNC, RAK_INVALID_SHOT, 2);
+			}
+			else if(floatcmp(bulletData[PR_hitPos][0], rak_vX) == 0 || floatcmp(bulletData[PR_hitPos][1], rak_vY) == 0 ||
+			floatcmp(bulletData[PR_hitPos][2], rak_vZ) == 0)
+			{
+			    #if defined RAK_DEBUG
+				    printf("[Rakcheat debug] [ID_BULLET_SYNC] Pos x, y, z: %f, %f, %f, sync x, y, z: %f, %f, %f",
+				    rak_vX, rak_vY, rak_vZ, bulletData[PR_hitPos][0], bulletData[PR_hitPos][1], bulletData[PR_hitPos][2]);
+		        #endif
+				return KickWithCode(playerid, ID_BULLET_SYNC, RAK_INVALID_SHOT, 3);
+			}
+		}
+    #endif
 	return 1;
 }
 
@@ -520,30 +599,30 @@ IPacket:ID_AIM_SYNC(playerid, BitStream:bs)
 	if(CheckValidityData(aimData[PR_camFrontVec][0]) != 1 || CheckValidityData(aimData[PR_camFrontVec][1]) != 1 ||
 	CheckValidityData(aimData[PR_camFrontVec][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_AIM_SYNC] Camfrontvec x, y, z: %f, %f, %f",
 		    aimData[PR_camFrontVec][0], aimData[PR_camFrontVec][1], aimData[PR_camFrontVec][2]);
         #endif
-		return KickWithCode(playerid, ID_AIM_SYNC, INVALID_CAMFRONTVEC, 0);
+		return KickWithCode(playerid, ID_AIM_SYNC, RAK_INVALID_CAMFRONTVEC, 0);
 	}
 
 	if(CheckValidityData(aimData[PR_camPos][0]) != 1 || CheckValidityData(aimData[PR_camPos][1]) != 1 ||
 	CheckValidityData(aimData[PR_camPos][2]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_AIM_SYNC] Campos x, y, z: %f, %f, %f",
 		    aimData[PR_camPos][0], aimData[PR_camPos][1], aimData[PR_camPos][2]);
         #endif
-		return KickWithCode(playerid, ID_AIM_SYNC, INVALID_CAMPOS, 0);
+		return KickWithCode(playerid, ID_AIM_SYNC, RAK_INVALID_CAMPOS, 0);
 	}
 
 	if(CheckValidityData(aimData[PR_aimZ]) != 1)
 	{
-	    #if defined DEBUG
+	    #if defined RAK_DEBUG
 		    printf("[Rakcheat debug] [ID_AIM_SYNC] Aimz: %f",
 		    aimData[PR_aimZ]);
         #endif
-        return KickWithCode(playerid, ID_AIM_SYNC, INVALID_AIMZ, 0);
+        return KickWithCode(playerid, ID_AIM_SYNC, RAK_INVALID_AIMZ, 0);
 	}
 	return 1;
 }
