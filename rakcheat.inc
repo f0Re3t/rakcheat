@@ -17,6 +17,14 @@
     #define RAK_MAX_QUAT_WARNINGS 1
 #endif
 
+#if !defined RAK_MAX_SURF_WARNINGS
+    #define RAK_MAX_SURF_WARNINGS 30
+#endif
+
+#if !defined RAK_MAX_SURF_DIST_WARNINGS
+    #define RAK_MAX_SURF_DIST_WARNINGS 30
+#endif
+
 #if __Pawn >= 0x3A && defined __PawnBuild
     #if __Pawn > 0x3A || __PawnBuild >= 2
         #define static_enum static enum
@@ -72,7 +80,9 @@ static_const(ID_AIM_SYNC = 203);
 
 static_enum rakInfo
 {
-    rakQuatCount
+    rakQuatCount,
+    rakSurfingCount,
+    rakSurfingDistCount
 }
 static RAKInfo[MAX_PLAYERS][rakInfo];
 
@@ -117,7 +127,9 @@ static KickWithCode(playerid, sync, type, subtype)
     public OnPlayerConnect(playerid)
 #endif
 {
-    RAKInfo[playerid][rakQuatCount] = 0;
+    RAKInfo[playerid][rakQuatCount] =
+    RAKInfo[playerid][rakSurfingCount] =
+    RAKInfo[playerid][rakSurfingDistCount] = 0;
 	#if !defined _inc_y_hooks && !defined _INC_y_hooks\
 	    && defined rak_OnPlayerConnect
 	    return rak_OnPlayerConnect(playerid);
@@ -205,9 +217,27 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
         return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_SURFING_OFFSETS, 0);
 	}
 
+	if(floatabs(onFootData[PR_surfingOffsets][0]) > 50.0 || floatabs(onFootData[PR_surfingOffsets][1]) > 50.0 ||
+	floatabs(onFootData[PR_surfingOffsets][2]) > 50.0)
+	{
+	    if(++RAKInfo[playerid][rakSurfingCount] > RAK_MAX_SURF_WARNINGS)
+	    {
+			#if defined RAK_DEBUG
+			    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Surfing: %d, surfing offsets x, y, z: %f, %f, %f",
+			    onFootData[PR_surfingVehicleId], onFootData[PR_surfingOffsets][0],
+			    onFootData[PR_surfingOffsets][1], onFootData[PR_surfingOffsets][2]);
+			#endif
+			return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_SURFING_OFFSETS, 1);
+        }
+    }
+    else
+    {
+        RAKInfo[playerid][rakSurfingCount] = 0;
+    }
+
 	if(onFootData[PR_surfingVehicleId] != 0)
 	{
-	    if(0 < onFootData[PR_surfingVehicleId] < MAX_VEHICLES)
+	    if(0 < onFootData[PR_surfingVehicleId] <= MAX_VEHICLES)
 		{
 		    new rak_model = GetVehicleModel(onFootData[PR_surfingVehicleId]);
 		    if(rak_model == 0)
@@ -220,42 +250,61 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 			}
 			else
 			{
-			    if(floatabs(onFootData[PR_surfingOffsets][0]) >= 25.0 || floatabs(onFootData[PR_surfingOffsets][1]) >= 25.0 ||
-			    floatabs(onFootData[PR_surfingOffsets][2]) >= 25.0)
+			    new Float:rak_vX, Float:rak_vY, Float:rak_vZ;
+			    GetVehiclePos(onFootData[PR_surfingVehicleId], rak_vX, rak_vY, rak_vZ);
+			    new Float:rak_dist = VectorSize(floatsub(onFootData[PR_position][0], rak_vX), floatsub(onFootData[PR_position][1], rak_vY),
+			    floatsub(onFootData[PR_position][2], rak_vZ));
+			    if(floatcmp(rak_dist, 50.0) > 0)
 				{
-				    #if defined RAK_DEBUG
-					    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Veh model: %d, vehicleid: %d, surfing offsets x, y, z: %f, %f, %f",
-					    rak_model, onFootData[PR_surfingVehicleId], onFootData[PR_surfingOffsets][0], onFootData[PR_surfingOffsets][1], onFootData[PR_surfingOffsets][2]);
-			        #endif
-			        return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_SURFING_OFFSETS, 1);
+				    if(++RAKInfo[playerid][rakSurfingDistCount] > RAK_MAX_SURF_DIST_WARNINGS)
+				    {
+					    #if defined RAK_DEBUG
+						    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Veh x, y, z: %f, %f, %f, player x, y, z: %f, %f, %f, distance: %f",
+						    rak_vX, rak_vY, rak_vZ, onFootData[PR_position][0], onFootData[PR_position][1], onFootData[PR_position][2], rak_dist);
+				        #endif
+				        return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_SURFING, 1);
+                    }
+                }
+                else
+				{
+				    RAKInfo[playerid][rakSurfingDistCount] = 0;
 				}
-			}
-		}
-		else if(MAX_VEHICLES <= onFootData[PR_surfingVehicleId] < MAX_OBJECTS + MAX_VEHICLES)
+            }
+        }
+		else if(MAX_VEHICLES < onFootData[PR_surfingVehicleId] <= MAX_OBJECTS + MAX_VEHICLES)
 		{
 		    new rak_object = IsValidObject(onFootData[PR_surfingVehicleId]);
-		    if(rak_object == 0)
+			if(rak_object == 0)
 			{
 			    #if defined RAK_DEBUG
 				    printf("[Rakcheat debug] [ID_PLAYER_SYNC] IsValidObject: %d, objectid: %d",
 				    rak_object, onFootData[PR_surfingVehicleId]);
-		        #endif
-		        return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_SURFING, 1);
+			    #endif
+			    return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_SURFING, 2);
 			}
 			else
 			{
-			    if(floatabs(onFootData[PR_surfingOffsets][0]) >= 101.0 || floatabs(onFootData[PR_surfingOffsets][1]) >= 101.0 ||
-			    floatabs(onFootData[PR_surfingOffsets][2]) >= 101.0)
+			    new Float:rak_vX, Float:rak_vY, Float:rak_vZ;
+			    GetObjectPos(onFootData[PR_surfingVehicleId], rak_vX, rak_vY, rak_vZ);
+			    new Float:rak_dist = VectorSize(floatsub(onFootData[PR_position][0], rak_vX), floatsub(onFootData[PR_position][1], rak_vY),
+			    floatsub(onFootData[PR_position][2], rak_vZ));
+			    if(floatcmp(rak_dist, 50.0) > 0)
 				{
-				    #if defined RAK_DEBUG
-					    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Object modelid: %d, objectid: %d, surfing offsets x, y, z: %f, %f, %f",
-					    GetObjectModel(onFootData[PR_surfingVehicleId]), onFootData[PR_surfingVehicleId], onFootData[PR_surfingOffsets][0],
-					    onFootData[PR_surfingOffsets][1], onFootData[PR_surfingOffsets][2]);
-			        #endif
-			        return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_SURFING_OFFSETS, 2);
+				    if(++RAKInfo[playerid][rakSurfingDistCount] > RAK_MAX_SURF_DIST_WARNINGS)
+				    {
+					    #if defined RAK_DEBUG
+						    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Object x, y, z: %f, %f, %f, player x, y, z: %f, %f, %f, distance: %f",
+						    rak_vX, rak_vY, rak_vZ, onFootData[PR_position][0], onFootData[PR_position][1], onFootData[PR_position][2], rak_dist);
+				        #endif
+				        return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_SURFING, 3);
+		            }
 				}
-			}
-		}
+				else
+				{
+				    RAKInfo[playerid][rakSurfingDistCount] = 0;
+				}
+            }
+        }
 		else
 		{
 		    if(onFootData[PR_surfingVehicleId] != INVALID_VEHICLE_ID)
@@ -264,7 +313,7 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 				    printf("[Rakcheat debug] [ID_PLAYER_SYNC] Surfing: %d",
 				    onFootData[PR_surfingVehicleId]);
 		        #endif
-		        return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_SURFING, 2);
+		        return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_SURFING, 4);
 			}
 		}
 	}
