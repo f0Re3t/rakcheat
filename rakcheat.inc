@@ -104,7 +104,7 @@ static CheckOutputLimit(Float:data, Float:max, Float:min = 0.0, bool:check = fal
 
 static KickWithCode(playerid, sync, type, subtype)
 {
-	if(IsPlayerConnected(playerid) == 0) return 0;
+	if(!IsPlayerConnected(playerid)) return 0;
 	#if defined RAK_DEBUG
 		printf("[Rakcheat] Suspicious player ID %d. Reason code: %03d (%d)", playerid, type, subtype);
 	#endif
@@ -134,6 +134,7 @@ static KickWithCode(playerid, sync, type, subtype)
 		return 1;
 	#endif
 }
+
 #if !defined _inc_y_hooks && !defined _INC_y_hooks
 	#if defined _ALS_OnPlayerConnect
 		#undef OnPlayerConnect
@@ -252,7 +253,7 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 
 	if(onFootData[PR_surfingVehicleId] != 0)
 	{
-		if(0 < onFootData[PR_surfingVehicleId] <= MAX_VEHICLES)
+		if(0 < onFootData[PR_surfingVehicleId] < MAX_VEHICLES)
 		{
 			new rak_model = GetVehicleModel(onFootData[PR_surfingVehicleId]);
 			if(rak_model == 0)
@@ -283,8 +284,9 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 				else RAKInfo[playerid][rakSurfingDistCount] = 0;
 			}
 		}
-		else if(MAX_VEHICLES < onFootData[PR_surfingVehicleId] <= MAX_OBJECTS + MAX_VEHICLES)
+		else if(MAX_VEHICLES < onFootData[PR_surfingVehicleId] < MAX_VEHICLES + MAX_OBJECTS)
 		{
+			onFootData[PR_surfingVehicleId] -= MAX_VEHICLES;
 			new rak_object = GetObjectModel(onFootData[PR_surfingVehicleId]);
 			if(rak_object == -1)
 			{
@@ -314,15 +316,12 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 				else RAKInfo[playerid][rakSurfingDistCount] = 0;
 			}
 		}
-		else
+		else if(onFootData[PR_surfingVehicleId] != INVALID_VEHICLE_ID)
 		{
-			if(onFootData[PR_surfingVehicleId] != INVALID_VEHICLE_ID)
-			{
-				#if defined RAK_DEBUG
-					printf("[Rakcheat debug] [ID_PLAYER_SYNC] Surfing: %d", onFootData[PR_surfingVehicleId]);
-				#endif
-				return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_SURFING, 4);
-			}
+			#if defined RAK_DEBUG
+				printf("[Rakcheat debug] [ID_PLAYER_SYNC] Surfing: %d", onFootData[PR_surfingVehicleId]);
+			#endif
+			return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_SURFING, 4);
 		}
 	}
 
