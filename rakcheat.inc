@@ -183,16 +183,6 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 		return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_QUATERNION, 0);
 	}
 
-	if(CheckOutputLimit(onFootData[PR_quaternion][0], 1.0) || CheckOutputLimit(onFootData[PR_quaternion][1], 1.0) ||
-	CheckOutputLimit(onFootData[PR_quaternion][2], 1.0) || CheckOutputLimit(onFootData[PR_quaternion][3], 1.0))
-	{
-		#if defined RAK_DEBUG
-			printf("[Rakcheat debug] [ID_PLAYER_SYNC] Quaternion w, x, y, z: %f, %f, %f, %f",
-			onFootData[PR_quaternion][0], onFootData[PR_quaternion][1], onFootData[PR_quaternion][2], onFootData[PR_quaternion][3]);
-		#endif
-		return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_QUATERNION, 1);
-	}
-
 	new Float:rak_ang = atan2(floatmul(2.0, floatadd(floatmul(onFootData[PR_quaternion][2], onFootData[PR_quaternion][3]),
 	floatmul(onFootData[PR_quaternion][0], onFootData[PR_quaternion][1]))), floatadd(floatsub(floatsub(floatpower(onFootData[PR_quaternion][0], 2.0),
 	floatpower(onFootData[PR_quaternion][1], 2.0)), floatpower(onFootData[PR_quaternion][2], 2.0)),
@@ -350,16 +340,6 @@ IPacket:ID_VEHICLE_SYNC(playerid, BitStream:bs)
 			inCarData[PR_quaternion][0], inCarData[PR_quaternion][1], inCarData[PR_quaternion][2], inCarData[PR_quaternion][3]);
 		#endif
 		return KickWithCode(playerid, ID_VEHICLE_SYNC, RAK_INVALID_QUATERNION, 0);
-	}
-
-	if(CheckOutputLimit(inCarData[PR_quaternion][0], 1.0) || CheckOutputLimit(inCarData[PR_quaternion][1], 1.0) ||
-	CheckOutputLimit(inCarData[PR_quaternion][2], 1.0) || CheckOutputLimit(inCarData[PR_quaternion][3], 1.0))
-	{
-		#if defined RAK_DEBUG
-			printf("[Rakcheat debug] [ID_VEHICLE_SYNC] Quaternion w, x, y, z: %f, %f, %f, %f",
-			inCarData[PR_quaternion][0], inCarData[PR_quaternion][1], inCarData[PR_quaternion][2], inCarData[PR_quaternion][3]);
-		#endif
-		return KickWithCode(playerid, ID_VEHICLE_SYNC, RAK_INVALID_QUATERNION, 1);
 	}
 
 	if(CheckValidityData(inCarData[PR_position][0]) || CheckValidityData(inCarData[PR_position][1]) || CheckValidityData(inCarData[PR_position][2]))
@@ -599,16 +579,6 @@ IPacket:ID_TRAILER_SYNC(playerid, BitStream:bs)
 			trailerData[PR_quaternion][0], trailerData[PR_quaternion][1], trailerData[PR_quaternion][2], trailerData[PR_quaternion][3]);
 		#endif
 		return KickWithCode(playerid, ID_TRAILER_SYNC, RAK_INVALID_QUATERNION, 0);
-	}
-
-	if(CheckOutputLimit(trailerData[PR_quaternion][0], 1.0) || CheckOutputLimit(trailerData[PR_quaternion][1], 1.0) ||
-	CheckOutputLimit(trailerData[PR_quaternion][2], 1.0) || CheckOutputLimit(trailerData[PR_quaternion][3], 1.0))
-	{
-		#if defined RAK_DEBUG
-			printf("[Rakcheat debug] [ID_TRAILER_SYNC] Quaternion w, x, y, z: %f, %f, %f, %f",
-			trailerData[PR_quaternion][0], trailerData[PR_quaternion][1], trailerData[PR_quaternion][2], trailerData[PR_quaternion][3]);
-		#endif
-		return KickWithCode(playerid, ID_TRAILER_SYNC, RAK_INVALID_QUATERNION, 1);
 	}
 
 	if(CheckValidityData(trailerData[PR_velocity][0]) || CheckValidityData(trailerData[PR_velocity][1]) || CheckValidityData(trailerData[PR_velocity][2]))
@@ -872,14 +842,6 @@ IPacket:ID_AIM_SYNC(playerid, BitStream:bs)
 			printf("[Rakcheat debug] [ID_AIM_SYNC] Aimz: %f", aimData[PR_aimZ]);
 		#endif
 		return KickWithCode(playerid, ID_AIM_SYNC, RAK_INVALID_AIMZ, 0);
-	}
-
-	if(CheckOutputLimit(aimData[PR_aimZ], 1.5))
-	{
-		#if defined RAK_DEBUG
-			printf("[Rakcheat debug] [ID_AIM_SYNC] Aimz: %f", aimData[PR_aimZ]);
-		#endif
-		return KickWithCode(playerid, ID_AIM_SYNC, RAK_INVALID_AIMZ, 1);
 	}
 	return 1;
 }
