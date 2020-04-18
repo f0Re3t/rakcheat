@@ -387,14 +387,6 @@ IPacket:ID_VEHICLE_SYNC(playerid, BitStream:bs)
 		#endif
 		return KickWithCode(playerid, ID_VEHICLE_SYNC, RAK_INVALID_TRAIN_SPEED, 0);
 	}
-
-	if(CheckOutputLimit(inCarData[PR_trainSpeed], 3.5))
-	{
-		#if defined RAK_DEBUG
-			printf("[Rakcheat debug] [ID_VEHICLE_SYNC] Train speed: %f", inCarData[PR_trainSpeed]);
-		#endif
-		return KickWithCode(playerid, ID_VEHICLE_SYNC, RAK_INVALID_TRAIN_SPEED, 1);
-	}
 	return 1;
 }
 
