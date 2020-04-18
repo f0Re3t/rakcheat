@@ -14,15 +14,15 @@
 #endif
 
 #if !defined RAK_MAX_QUAT_WARNINGS
-	#define RAK_MAX_QUAT_WARNINGS 1
+	#define RAK_MAX_QUAT_WARNINGS		1
 #endif
 
 #if !defined RAK_MAX_SURF_WARNINGS
-	#define RAK_MAX_SURF_WARNINGS 30
+	#define RAK_MAX_SURF_WARNINGS		30
 #endif
 
 #if !defined RAK_MAX_SURF_DIST_WARNINGS
-	#define RAK_MAX_SURF_DIST_WARNINGS 30
+	#define RAK_MAX_SURF_DIST_WARNINGS	30
 #endif
 
 #if __Pawn >= 0x3A && defined __PawnBuild
@@ -117,34 +117,27 @@ static KickWithCode(playerid, sync, type, subtype)
 	#endif
 }
 
-#if defined _inc_y_hooks || defined _INC_y_hooks
-	hook OnPlayerConnect(playerid)
-#else
-	public OnPlayerConnect(playerid)
-#endif
+public OnPlayerConnect(playerid)
 {
 	RAKInfo[playerid][rakQuatCount] =
 	RAKInfo[playerid][rakSurfingCount] =
 	RAKInfo[playerid][rakSurfingDistCount] = 0;
 
-	#if !defined _inc_y_hooks && !defined _INC_y_hooks\
-		&& defined rak_OnPlayerConnect
+	#if defined rak_OnPlayerConnect
 		return rak_OnPlayerConnect(playerid);
 	#else
 		return 1;
 	#endif
 }
 
-#if !defined _inc_y_hooks && !defined _INC_y_hooks
-	#if defined _ALS_OnPlayerConnect
-		#undef OnPlayerConnect
-	#else
-		#define _ALS_OnPlayerConnect
-	#endif
-	#define OnPlayerConnect rak_OnPlayerConnect
-	#if defined rak_OnPlayerConnect
-		forward rak_OnPlayerConnect(playerid);
-	#endif
+#if defined _ALS_OnPlayerConnect
+	#undef OnPlayerConnect
+#else
+	#define _ALS_OnPlayerConnect
+#endif
+#define OnPlayerConnect rak_OnPlayerConnect
+#if defined rak_OnPlayerConnect
+	forward rak_OnPlayerConnect(playerid);
 #endif
 
 IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
@@ -260,7 +253,7 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 				GetVehiclePos(onFootData[PR_surfingVehicleId], rak_vX, rak_vY, rak_vZ);
 				rak_ang = VectorSize(floatsub(onFootData[PR_position][0], rak_vX), floatsub(onFootData[PR_position][1], rak_vY),
 				floatsub(onFootData[PR_position][2], rak_vZ));
-				if(floatcmp(rak_ang, 50.0) > 0)
+				if(floatcmp(rak_ang, 50.0) >= 0)
 				{
 					if(++RAKInfo[playerid][rakSurfingDistCount] > RAK_MAX_SURF_DIST_WARNINGS)
 					{
@@ -277,22 +270,22 @@ IPacket:ID_PLAYER_SYNC(playerid, BitStream:bs)
 		else if(MAX_VEHICLES < onFootData[PR_surfingVehicleId] < MAX_VEHICLES + MAX_OBJECTS)
 		{
 			onFootData[PR_surfingVehicleId] -= MAX_VEHICLES;
-			new rak_object = GetObjectModel(onFootData[PR_surfingVehicleId]);
-			if(rak_object == -1)
+			new rak_tmp = IsValidObject(onFootData[PR_surfingVehicleId]);
+			if(!rak_tmp && !IsValidPlayerObject(playerid, onFootData[PR_surfingVehicleId]))
 			{
 				#if defined RAK_DEBUG
-					printf("[Rakcheat debug] [ID_PLAYER_SYNC] Object model: %d, objectid: %d",
-					rak_object, onFootData[PR_surfingVehicleId]);
+					printf("[Rakcheat debug] [ID_PLAYER_SYNC] Objectid: %d", onFootData[PR_surfingVehicleId]);
 				#endif
 				return KickWithCode(playerid, ID_PLAYER_SYNC, RAK_INVALID_SURFING, 2);
 			}
 			else
 			{
 				new Float:rak_vX, Float:rak_vY, Float:rak_vZ;
-				GetObjectPos(onFootData[PR_surfingVehicleId], rak_vX, rak_vY, rak_vZ);
+				if(rak_tmp) GetObjectPos(onFootData[PR_surfingVehicleId], rak_vX, rak_vY, rak_vZ);
+				else GetPlayerObjectPos(playerid, onFootData[PR_surfingVehicleId], rak_vX, rak_vY, rak_vZ);
 				rak_ang = VectorSize(floatsub(onFootData[PR_position][0], rak_vX), floatsub(onFootData[PR_position][1], rak_vY),
 				floatsub(onFootData[PR_position][2], rak_vZ));
-				if(floatcmp(rak_ang, 50.0) > 0)
+				if(floatcmp(rak_ang, 50.0) >= 0)
 				{
 					if(++RAKInfo[playerid][rakSurfingDistCount] > RAK_MAX_SURF_DIST_WARNINGS)
 					{
