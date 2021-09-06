@@ -1,6 +1,4 @@
 {
   "user": "f0Re3t",
-  "repo": "rakcheat",
-  "contributors": ["f0Re3t"],
-  "dependencies": ["sampctl/samp-stdlib"]
+  "repo": "rakcheat"
 }
