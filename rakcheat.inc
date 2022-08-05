@@ -92,7 +92,7 @@ static RAKInfo[MAX_PLAYERS][rakInfo];
 
 static CheckValidityData(Float:data)
 {
-	if(floatcmp(data, data) != 0 || floatcmp(data, 0x7F800000) == 0 || floatcmp(data, 0xFF800000) == 0) return 1;
+	if(floatcmp(data, data) != 0 || floatcmp(data, Float:0x7F800000) == 0 || floatcmp(data, Float:0xFF800000) == 0) return 1;
 	return 0;
 }
 
